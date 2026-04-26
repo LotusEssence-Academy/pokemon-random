@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ランダムポケモンカード</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 24px;
+    background: linear-gradient(135deg, #2a4ba0 0%, #5b7dd8 100%);
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  h1 {
+    color: #fff;
+    text-shadow: 2px 2px 0 #1a2f60;
+    font-size: 24px;
+    letter-spacing: 2px;
+  }
+
+  .card {
+    width: 320px;
+    height: 460px;
+    border-radius: 18px;
+    padding: 14px;
+    background: linear-gradient(145deg, #ffd54a 0%, #ffb300 50%, #ff8f00 100%);
+    box-shadow:
+      0 0 0 3px #8b5e00,
+      0 12px 24px rgba(0, 0, 0, 0.4),
+      inset 0 2px 4px rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card:hover { transform: translateY(-4px) scale(1.02); }
+  .card:active { transform: scale(0.98); }
+
+  .card-inner {
+    flex: 1;
+    background: #fffbea;
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    border: 2px solid #c98e00;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .name {
+    font-size: 22px;
+    font-weight: bold;
+    color: #222;
+    text-transform: capitalize;
+  }
+
+  .hp {
+    font-size: 16px;
+    color: #d32f2f;
+    font-weight: bold;
+  }
+
+  .image-frame {
+    background: linear-gradient(180deg, #b3e5fc 0%, #e1f5fe 100%);
+    border: 3px solid #c98e00;
+    border-radius: 8px;
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .image-frame img {
+    width: 90%;
+    height: 90%;
+    object-fit: contain;
+    image-rendering: pixelated;
+  }
+
+  .types {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .type {
+    padding: 4px 12px;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+  }
+
+  .stats {
+    margin-top: 12px;
+    padding: 8px;
+    background: #f5f5f5;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #333;
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+  }
+
+  .footer {
+    margin-top: auto;
+    padding-top: 8px;
+    font-size: 10px;
+    color: #888;
+    text-align: center;
+    font-style: italic;
+  }
+
+  .hint {
+    color: #fff;
+    font-size: 14px;
+    opacity: 0.8;
+  }
+
+  .loading { opacity: 0.5; }
+
+  /* タイプごとの色 */
+  .type-normal   { background: #A8A878; }
+  .type-fire     { background: #F08030; }
+  .type-water    { background: #6890F0; }
+  .type-electric { background: #F8D030; color: #333; text-shadow: none; }
+  .type-grass    { background: #78C850; }
+  .type-ice      { background: #98D8D8; color: #333; text-shadow: none; }
+  .type-fighting { background: #C03028; }
+  .type-poison   { background: #A040A0; }
+  .type-ground   { background: #E0C068; color: #333; text-shadow: none; }
+  .type-flying   { background: #A890F0; }
+  .type-psychic  { background: #F85888; }
+  .type-bug      { background: #A8B820; }
+  .type-rock     { background: #B8A038; }
+  .type-ghost    { background: #705898; }
+  .type-dragon   { background: #7038F8; }
+  .type-dark     { background: #705848; }
+  .type-steel    { background: #B8B8D0; color: #333; text-shadow: none; }
+  .type-fairy    { background: #EE99AC; }
+</style>
+</head>
+<body>
+  <h1>RANDOM POKEMON CARD</h1>
+
+  <div class="card" id="card">
+    <div class="card-inner">
+      <div class="card-header">
+        <div class="name" id="name">？？？</div>
+        <div class="hp" id="hp">HP --</div>
+      </div>
+      <div class="image-frame">
+        <img id="img" src="" alt="">
+      </div>
+      <div class="types" id="types"></div>
+      <div class="stats" id="stats"></div>
+      <div class="footer">No.<span id="num">---</span> / Click to draw</div>
+    </div>
+  </div>
+
+  <p class="hint">カードをクリックでランダム召喚</p>
+
+<script>
+  const card = document.getElementById('card');
+  const nameEl = document.getElementById('name');
+  const hpEl = document.getElementById('hp');
+  const imgEl = document.getElementById('img');
+  const typesEl = document.getElementById('types');
+  const statsEl = document.getElementById('stats');
+  const numEl = document.getElementById('num');
+
+  const MAX_ID = 1025;
+
+  async function drawPokemon() {
+    card.classList.add('loading');
+    const id = Math.floor(Math.random() * MAX_ID) + 1;
+
+    try {
+      const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+      const data = await res.json();
+
+      const speciesRes = await fetch(data.species.url);
+      const species = await speciesRes.json();
+      const jaName = species.names.find(n => n.language.name === 'ja')?.name || data.name;
+
+      nameEl.textContent = jaName;
+      numEl.textContent = String(data.id).padStart(4, '0');
+
+      const hp = data.stats.find(s => s.stat.name === 'hp')?.base_stat || 0;
+      hpEl.textContent = `HP ${hp}`;
+
+      imgEl.src = data.sprites.other['official-artwork']?.front_default
+                || data.sprites.front_default
+                || '';
+
+      typesEl.innerHTML = '';
+      data.types.forEach(t => {
+        const span = document.createElement('span');
+        span.className = `type type-${t.type.name}`;
+        span.textContent = t.type.name;
+        typesEl.appendChild(span);
+      });
+
+      const atk = data.stats.find(s => s.stat.name === 'attack')?.base_stat || 0;
+      const def = data.stats.find(s => s.stat.name === 'defense')?.base_stat || 0;
+      const spd = data.stats.find(s => s.stat.name === 'speed')?.base_stat || 0;
+      statsEl.innerHTML = `
+        <div class="stat-row"><span>こうげき</span><span>${atk}</span></div>
+        <div class="stat-row"><span>ぼうぎょ</span><span>${def}</span></div>
+        <div class="stat-row"><span>すばやさ</span><span>${spd}</span></div>
+      `;
+    } catch (e) {
+      nameEl.textContent = 'エラー';
+      console.error(e);
+    } finally {
+      card.classList.remove('loading');
+    }
+  }
+
+  card.addEventListener('click', drawPokemon);
+  drawPokemon();
+</script>
+</body>
+</html>
